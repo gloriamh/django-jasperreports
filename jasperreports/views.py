@@ -43,12 +43,17 @@ class PDFReportView(View):
     additional_parms = []
 
     def report_parameters_args(self):
-        return ['{0}={1}'.format(k, v)
-                for (k, v) in self.report_parameters.items()]
+        params = []
+        for k, v in self.report_parameters.items():
+            if isinstance(v, basestring):
+                v = '"{0}"'.format(v)
+            params.append('{0}={1}'.format(k, v))
+        return params
 
     def get(self, request, *args, **kwargs):
         with tempfile.NamedTemporaryFile() as output_file:
-            args = [os.path.join(JASPERSTARTER_DIR, 'bin/jasperstarter'),
+            db_host = settings.DATABASES['default'].get('HOST', 'localhost') or 'localhost'
+            cmd = [os.path.join(JASPERSTARTER_DIR, 'bin/jasperstarter'),
                     'pr', os.path.join(
                         settings.JASPERREPORTS_DIR, self.report_name),
                     '-f', 'pdf',
@@ -57,12 +62,18 @@ class PDFReportView(View):
                     '-t', 'mysql',
                     '-u', settings.DATABASES['default']['USER'],
                     '-p', settings.DATABASES['default']['PASSWORD'], 
-                    '-H', settings.DATABASES['default']['HOST'],
+                    '-H', db_host,
                     '-n', settings.DATABASES['default']['NAME']]
             if self.report_parameters:
-                args += ['-P'] + self.report_parameters_args()
-            args += self.additional_parms
-            subprocess.check_call(args)
+                cmd += ['-P'] + self.report_parameters_args()
+            cmd += self.additional_parms
+
+            p = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+            if p.returncode:
+                raise Exception(p.returncode, ' '.join(cmd), stdout, stderr)
+
             pdf = read_file('{}.pdf'.format(output_file.name))
 
         return HttpDownloadResponse(request, pdf, self.pdf_name)
