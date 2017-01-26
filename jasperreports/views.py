@@ -7,6 +7,7 @@ import urllib
 from django.conf import settings
 from django.views.generic.base import View
 from django.http import HttpResponse
+from django.utils import translation
 
 BASE_DIR = os.path.dirname(__file__)
 JASPERSTARTER_DIR = os.path.join(BASE_DIR, 'jasperstarter')
@@ -54,16 +55,18 @@ class PDFReportView(View):
         with tempfile.NamedTemporaryFile() as output_file:
             db_host = settings.DATABASES['default'].get('HOST', 'localhost') or 'localhost'
             cmd = [os.path.join(JASPERSTARTER_DIR, 'bin/jasperstarter'),
-                    'pr', os.path.join(
-                        settings.JASPERREPORTS_DIR, self.report_name),
-                    '-f', 'pdf',
-                    '-o', output_file.name,
-                    '--jdbc-dir', os.path.join(JASPERSTARTER_DIR, 'jdbc/'),
-                    '-t', 'mysql',
-                    '-u', settings.DATABASES['default']['USER'],
-                    '-p', settings.DATABASES['default']['PASSWORD'], 
-                    '-H', db_host,
-                    '-n', settings.DATABASES['default']['NAME']]
+                   '--locale', translation.get_language(),
+                   'pr', os.path.join(
+                       settings.JASPERREPORTS_DIR, self.report_name),
+                   '-f', 'pdf',
+                   '-o', output_file.name,
+                   '--jdbc-dir', os.path.join(JASPERSTARTER_DIR, 'jdbc/'),
+                   '-t', 'mysql',
+                   '-u', settings.DATABASES['default']['USER'],
+                   '-p', settings.DATABASES['default']['PASSWORD'],
+                   '-H', db_host,
+                   '-n', settings.DATABASES['default']['NAME'],
+                   '-r']
             if self.report_parameters:
                 cmd += ['-P'] + self.report_parameters_args()
             cmd += self.additional_parms
