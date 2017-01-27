@@ -72,7 +72,7 @@ class PDFReportView(View):
             cmd += self.additional_parms
 
             p = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                " ".join(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             stdout, stderr = p.communicate()
             if p.returncode:
                 raise Exception(p.returncode, ' '.join(cmd), stdout, stderr)

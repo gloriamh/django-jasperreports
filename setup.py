@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-jasperreports',
-    version='v1.0.4.alpha1',
+    version='v1.0.5.alpha1',
     packages=find_packages(),
     package_data = {
         '': ['*.xml', '*.jrxml', '*.jar', '*.py', '*.sh'],
